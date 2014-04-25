@@ -64,32 +64,33 @@ private
           return true
         else
 
-        precompile = rake.task("assets:precompile")
-        return true unless precompile.is_defined?
+          precompile = rake.task("assets:precompile")
+          return true unless precompile.is_defined?
 
-        topic("Preparing app for Rails asset pipeline")
+          topic("Preparing app for Rails asset pipeline")
 
-        precompile.invoke(env: rake_env)
+          precompile.invoke(env: rake_env)
 
-        if precompile.success?
-          log "assets_precompile", :status => "success"
-          puts "Asset precompilation completed (#{"%.2f" % precompile.time}s)"
-          # If 'turbo-sprockets-rails3' gem is available, run 'assets:clean_expired' and
-          # cache assets if task was successful.
-          if gem_is_bundled?('turbo-sprockets-rails3')
-            log("assets_clean_expired") do
-              run("env PATH=$PATH:bin bundle exec rake assets:clean_expired 2>&1")
-              if $?.success?
-                log "assets_clean_expired", :status => "success"
-                cache.store "public/assets"
-              else
-                log "assets_clean_expired", :status => "failure"
-                cache.clear "public/assets"
+          if precompile.success?
+            log "assets_precompile", :status => "success"
+            puts "Asset precompilation completed (#{"%.2f" % precompile.time}s)"
+            # If 'turbo-sprockets-rails3' gem is available, run 'assets:clean_expired' and
+            # cache assets if task was successful.
+            if gem_is_bundled?('turbo-sprockets-rails3')
+              log("assets_clean_expired") do
+                run("env PATH=$PATH:bin bundle exec rake assets:clean_expired 2>&1")
+                if $?.success?
+                  log "assets_clean_expired", :status => "success"
+                  cache.store "public/assets"
+                else
+                  log "assets_clean_expired", :status => "failure"
+                  cache.clear "public/assets"
+                end
               end
             end
+          else
+            precompile_fail(precompile.output)
           end
-        else
-          precompile_fail(precompile.output)
         end
       end
     end
